@@ -1,0 +1,9 @@
+name: UndeadOverrun
+author: Vincent1468
+main: nl.imesiacraft.nlundeadoverrun.UndeadOverrun
+version: 1.0
+description: >
+             UndeadOverrun minigame
+commands:
+  uo:
+    description: Main command
