@@ -177,6 +177,9 @@ public class EventListener implements Listener{
 	@EventHandler
 	public void onPlayerDeath(PlayerDeathEvent event) {
 		Player player = event.getEntity();
+		plugin.restoreGamemode(player);
+		plugin.restoreInv(player);
+		plugin.restoreLoc(player);
 		if(plugin.playing.contains(player)) {
 			event.getDrops().clear();
 			event.setDeathMessage(player.getName() + " has died in UndeadOverrun");

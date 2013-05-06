@@ -34,7 +34,10 @@ public enum ItemTypes {
 	private String name = null;
 	
 	ItemTypes(int price, Material material, int amount, String name) {
-		
+		this.price = price;
+		this.material = material;
+		this.amount = amount;
+		this.name = name;
 	}
 	
 	public int getPrice() {

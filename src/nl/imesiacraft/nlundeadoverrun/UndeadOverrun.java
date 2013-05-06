@@ -17,7 +17,7 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.craftbukkit.v1_5_R3.entity.CraftLivingEntity;
+import org.bukkit.craftbukkit.v1_5_R3.entity.CraftZombie;
 import org.bukkit.craftbukkit.v1_5_R3.inventory.CraftItemStack;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -27,11 +27,20 @@ import org.bukkit.entity.Zombie;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Score;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.ScoreboardManager;
+import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 
 public class UndeadOverrun extends JavaPlugin {
 	/* ToDo:
-	 * firework effects
+	 * ScoreBoard:
+	 * wave
+	 * coins
+	 * needKills
 	 */	
 	//list for players that are ingame
 	public List<Player> playing = new ArrayList<Player>();
@@ -63,6 +72,11 @@ public class UndeadOverrun extends JavaPlugin {
 	public HashMap<String, Integer> score = new HashMap<String, Integer>();
 	//IconMenu
 	public static IconMenu im;
+	//Scoreboard stuff
+	public ScoreboardManager manager = null;
+	public Scoreboard board = null;
+	public Team team = null;
+	public Objective objective = null;
 	//FireworkEffectPlayer
 	FireworkEffectPlayer fplayer = new FireworkEffectPlayer();
 	//circle method
@@ -103,6 +117,11 @@ public class UndeadOverrun extends JavaPlugin {
 
 	//Enable
 	public void onEnable() {
+		//Scoreboards
+		manager = Bukkit.getScoreboardManager();
+		board = manager.getNewScoreboard();
+		team = board.registerNewTeam("uo");
+		objective = board.registerNewObjective(ChatColor.GRAY + "UndeadOverrun", "dummy");
 		//Listener class
 		EventListener listener = new EventListener(this);
 
@@ -129,6 +148,7 @@ public class UndeadOverrun extends JavaPlugin {
 							}
 							playing.add(player);
 							notReady.add(player);
+							team.addPlayer(player);
 							return true;
 						} else {
 							player.sendMessage(ChatColor.GRAY + "You already joined!!");
@@ -212,10 +232,19 @@ public class UndeadOverrun extends JavaPlugin {
 									score.put(p.getName(), 0);
 									//teleport
 									p.teleport(startLoc);
+									//set good and health to full
+									p.setFoodLevel(20);
+									p.setHealth(20);
+									//set the team properties
+									team.setPrefix(ChatColor.GRAY + "[UO]");
+									team.setAllowFriendlyFire(true);
+									team.setCanSeeFriendlyInvisibles(true);
 									//wish the player luck!
 									player.sendMessage(ChatColor.GRAY + "Goodluck!");
 									//start the next wave
 									started = true;
+									//start the updating of the scoreboard
+									updateScoreBoard();
 								}
 								nextWave();
 							} else {
@@ -297,12 +326,14 @@ public class UndeadOverrun extends JavaPlugin {
 		}
 	}
 	public void restoreGamemode(Player p) {
-		String gm = gm_store.get(p);
-		if (gm.equals("s")) {
-			p.setGameMode(GameMode.SURVIVAL);
-		} else if(gm.equals("c")) {
-			p.setGameMode(GameMode.CREATIVE);
-		}
+        if(gm_store.containsKey(p)) {
+    		String gm = gm_store.get(p);
+    		if (gm.equals("s")) {
+    			p.setGameMode(GameMode.SURVIVAL);
+    		} else if(gm.equals("c")) {
+    			p.setGameMode(GameMode.CREATIVE);
+    		}	
+        }
 	}
 
 	private Vector getSpawnLoc(World world) {
@@ -325,8 +356,8 @@ public class UndeadOverrun extends JavaPlugin {
 	}
 
 	public void nextWave() {
-		Vector vMin = new Vector(2771, 0,-4356);
-		Vector vMax = new Vector(2836, 0,-4292);
+		//Vector vMin = new Vector(2771, 0,-4356);
+		//Vector vMax = new Vector(2836, 0,-4292);
 		waveReady = false;
 		kills = 0;
 		needKills = 0;
@@ -362,31 +393,31 @@ public class UndeadOverrun extends JavaPlugin {
 				Entity ent = world.spawnEntity(new Location(world, x, y, z), EntityType.ZOMBIE);
 				if (wave > 20) {
 					((Zombie)ent).setCustomName("Hell Zombie");
-					((CraftLivingEntity)ent).getHandle().setEquipment(0, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.DIAMOND_SWORD.getMaterial())));
-					((CraftLivingEntity)ent).getHandle().setEquipment(1, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.DIAMOND_BOOTS.getMaterial())));
-					((CraftLivingEntity)ent).getHandle().setEquipment(2, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.DIAMOND_LEGGINGS.getMaterial())));
-					((CraftLivingEntity)ent).getHandle().setEquipment(3, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.DIAMOND_ARMOR.getMaterial())));
-					((CraftLivingEntity)ent).getHandle().setEquipment(4, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.DIAMOND_HELMET.getMaterial())));
+					((CraftZombie)ent).getHandle().setEquipment(0, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.DIAMOND_SWORD.getMaterial())));
+					((CraftZombie)ent).getHandle().setEquipment(1, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.DIAMOND_BOOTS.getMaterial())));
+					((CraftZombie)ent).getHandle().setEquipment(2, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.DIAMOND_LEGGINGS.getMaterial())));
+					((CraftZombie)ent).getHandle().setEquipment(3, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.DIAMOND_ARMOR.getMaterial())));
+					((CraftZombie)ent).getHandle().setEquipment(4, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.DIAMOND_HELMET.getMaterial())));
 				} else if (wave > 10) {
 					((Zombie)ent).setCustomName("Death Zombie");
-					((CraftLivingEntity)ent).getHandle().setEquipment(0, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.IRON_SWORD.getMaterial())));
-					((CraftLivingEntity)ent).getHandle().setEquipment(1, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.IRON_BOOTS.getMaterial())));
-					((CraftLivingEntity)ent).getHandle().setEquipment(2, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.IRON_LEGGINGS.getMaterial())));
-					((CraftLivingEntity)ent).getHandle().setEquipment(3, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.IRON_ARMOR.getMaterial())));
-					((CraftLivingEntity)ent).getHandle().setEquipment(4, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.IRON_HELMET.getMaterial())));
+					((CraftZombie)ent).getHandle().setEquipment(0, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.IRON_SWORD.getMaterial())));
+					((CraftZombie)ent).getHandle().setEquipment(1, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.IRON_BOOTS.getMaterial())));
+					((CraftZombie)ent).getHandle().setEquipment(2, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.IRON_LEGGINGS.getMaterial())));
+					((CraftZombie)ent).getHandle().setEquipment(3, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.IRON_ARMOR.getMaterial())));
+					((CraftZombie)ent).getHandle().setEquipment(4, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.IRON_HELMET.getMaterial())));
 				} else if (wave > 5) {
 					((Zombie)ent).setCustomName("Strong Zombie");
-					((CraftLivingEntity)ent).getHandle().setEquipment(0, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.STONE_SWORD.getMaterial())));
-					((CraftLivingEntity)ent).getHandle().setEquipment(1, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.LEATHER_BOOTS.getMaterial())));
-					((CraftLivingEntity)ent).getHandle().setEquipment(2, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.LEATHER_LEGGINGS.getMaterial())));
-					((CraftLivingEntity)ent).getHandle().setEquipment(3, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.LEATHER_ARMOR.getMaterial())));
-					((CraftLivingEntity)ent).getHandle().setEquipment(4, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.LEATHER_HELMET.getMaterial())));
+					((CraftZombie)ent).getHandle().setEquipment(0, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.STONE_SWORD.getMaterial())));
+					((CraftZombie)ent).getHandle().setEquipment(1, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.LEATHER_BOOTS.getMaterial())));
+					((CraftZombie)ent).getHandle().setEquipment(2, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.LEATHER_LEGGINGS.getMaterial())));
+					((CraftZombie)ent).getHandle().setEquipment(3, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.LEATHER_ARMOR.getMaterial())));
+					((CraftZombie)ent).getHandle().setEquipment(4, CraftItemStack.asNMSCopy(new ItemStack(ItemTypes.LEATHER_HELMET.getMaterial())));
 				} else {
 					((Zombie)ent).setCustomName("Zombie");
 				}
 				((Zombie)ent).setCustomNameVisible(true);
-				//70% needs to be killed
-				killsNeeded += 0.7D;
+				//50% needs to be killed
+				killsNeeded += 0.5D;
 			}
 		}
 		needKills = (int)killsNeeded;
@@ -439,6 +470,28 @@ public class UndeadOverrun extends JavaPlugin {
 				}
 			}
 		}		
+	}
+	public void updateScoreBoard() {
+		Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
+			public void run() {	
+             if(started == true) {
+         		for(Player p : playing) {
+        			objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+        			objective.setDisplayName(ChatColor.GRAY + "UndeadOverrun");
+        		    Score swave = objective.getScore(Bukkit.getOfflinePlayer(ChatColor.DARK_RED + "Wave:"));	
+        		    swave.setScore(wave);
+        		    Score coins = objective.getScore(Bukkit.getOfflinePlayer(ChatColor.DARK_RED + "Coins:"));
+        		    coins.setScore(score.get(p.getName()));
+        		    Score needed = objective.getScore(Bukkit.getOfflinePlayer(ChatColor.DARK_RED + "Kills left:"));
+        		    needed.setScore(needKills - kills);
+        		    p.setScoreboard(board);
+        		}	 
+             } else {
+            	 Bukkit.getServer().getScheduler().cancelTask(0); 
+            	 board.clearSlot(DisplaySlot.SIDEBAR);
+             }
+			}	
+    	}, 20, 20);   
 	}
 
 	public void showHelpMenu(Player player) {
