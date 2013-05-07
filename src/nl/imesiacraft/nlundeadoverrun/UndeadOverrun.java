@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
 
+import nl.imesiacraft.nlundeadoverrun.UndeadPlayers.OldPlayer;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
@@ -17,6 +19,7 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.craftbukkit.v1_5_R3.entity.CraftLivingEntity;
 import org.bukkit.craftbukkit.v1_5_R3.entity.CraftZombie;
 import org.bukkit.craftbukkit.v1_5_R3.inventory.CraftItemStack;
 import org.bukkit.entity.Entity;
@@ -24,6 +27,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Zombie;
+import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -79,6 +83,7 @@ public class UndeadOverrun extends JavaPlugin {
 	public Objective objective = null;
 	//FireworkEffectPlayer
 	FireworkEffectPlayer fplayer = new FireworkEffectPlayer();
+
 	//circle method
 	public static List<Location> circle (Location loc, Integer r, Integer h, Boolean hollow, Boolean sphere, int plus_y) {
 		List<Location> circleblocks = new ArrayList<Location>();
@@ -204,13 +209,11 @@ public class UndeadOverrun extends JavaPlugin {
 								//World world = Bukkit.getWorld("Imesia");
 								Location startLoc = new Location(player.getWorld(), 2790, 87, -4318);
 								for(Player p : playing) {
-									//save gamemode
-									saveGamemode(p);
+
+									UndeadPlayers.addPlayer(p.getName(), new OldPlayer(p.getLocation(), p.getInventory(), p.getGameMode()));
 									p.setGameMode(GameMode.ADVENTURE);
-									//Inventory stuff
 									PlayerInventory inv = p.getInventory();
-									saveInv(p);
-									safeLoc(p);
+									
 									ItemStack boots = new ItemStack(Material.LEATHER_BOOTS, 1);
 									ItemStack leggings = new ItemStack(Material.LEATHER_LEGGINGS, 1);
 									ItemStack chestplate = new ItemStack(Material.LEATHER_CHESTPLATE, 1);
@@ -266,11 +269,12 @@ public class UndeadOverrun extends JavaPlugin {
 					}
 				} else if(args[0].equalsIgnoreCase("quit")) {
 					if(playing.contains(player)) {
+						
 						PlayerInventory inv = player.getInventory();
 						inv.clear();
-						restoreInv(player);	
-						restoreLoc(player);
-						restoreGamemode(player);
+						
+						UndeadPlayers.restorePlayer(player);
+						
 						playing.remove(player);
 						if(playing.isEmpty()) {
 							started = false;
@@ -415,6 +419,12 @@ public class UndeadOverrun extends JavaPlugin {
 				} else {
 					((Zombie)ent).setCustomName("Zombie");
 				}
+				EntityEquipment eq = ((CraftLivingEntity) ent).getEquipment();
+				eq.setBootsDropChance(0.0F);
+				eq.setLeggingsDropChance(0.0F);
+				eq.setChestplateDropChance(0.0F);
+				eq.setHelmetDropChance(0.0F);
+				eq.setItemInHandDropChance(0.0F);
 				((Zombie)ent).setCustomNameVisible(true);
 				//50% needs to be killed
 				killsNeeded += 0.5D;
@@ -506,5 +516,16 @@ public class UndeadOverrun extends JavaPlugin {
 		player.sendMessage(ChatColor.GRAY + "Commands while playing:");
 		player.sendMessage(ChatColor.GRAY + "/uo coins - To get your amount of coins");
 		player.sendMessage(ChatColor.GRAY + "/uo quit - To quit the game");	
+	}
+	
+	public void checkGame() {
+		if(playing.isEmpty()) {
+			started = false;
+			Bukkit.broadcastMessage(ChatColor.GRAY + "UndeadOverrun game finished!");
+			Bukkit.broadcastMessage(ChatColor.GRAY + "Wave reached: " + wave);
+			wave = 0;
+			score.clear();
+			removeMobs();
+		}	
 	}
 }
