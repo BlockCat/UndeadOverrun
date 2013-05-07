@@ -6,6 +6,7 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
 public class UndeadPlayers {
@@ -29,8 +30,8 @@ public class UndeadPlayers {
 			OldPlayer oPlayer = oldPlayers.get(player.getName());
 			
 			player.teleport(oPlayer.getLocation());
-			player.getInventory().setContents(oPlayer.getInventory().getContents());
-			player.getInventory().setArmorContents(((PlayerInventory) oPlayer.getInventory()).getArmorContents());
+			player.getInventory().setContents(oPlayer.getInventory());
+			player.getInventory().setArmorContents(oPlayer.getArmor());
 			player.setGameMode(oPlayer.getGameMode());
 			oldPlayers.remove(player.getName());
 		}
@@ -38,12 +39,15 @@ public class UndeadPlayers {
 	
 	public static class OldPlayer {
 		private Location location = null;
-		private Inventory inventory = null;
+		private ItemStack[] inventory = null;
+		private ItemStack[] armor = null;
+		
 		private GameMode gamemode = GameMode.SURVIVAL;
 		
 		public OldPlayer (Location location, Inventory inventory, GameMode gamemode) {
 			this.location = location;
-			this.inventory = inventory;
+			this.inventory = inventory.getContents();
+			this.armor = ((PlayerInventory)inventory).getArmorContents();
 			this.gamemode = gamemode;
 		}
 		
@@ -51,8 +55,12 @@ public class UndeadPlayers {
 			return location;
 		}
 		
-		public Inventory getInventory() {
+		public ItemStack[] getInventory() {
 			return inventory;
+		}
+		
+		public ItemStack[] getArmor() {
+			return armor;
 		}
 		
 		public GameMode getGameMode() {

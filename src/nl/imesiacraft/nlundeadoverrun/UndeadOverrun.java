@@ -482,7 +482,7 @@ public class UndeadOverrun extends JavaPlugin {
 		}		
 	}
 	public void updateScoreBoard() {
-		Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
+		int id = Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
 			public void run() {	
              if(started == true) {
          		for(Player p : playing) {
