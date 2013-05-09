@@ -34,6 +34,10 @@ public class UndeadPlayers {
 			player.getInventory().setArmorContents(oPlayer.getArmor());
 			player.setGameMode(oPlayer.getGameMode());
 			oldPlayers.remove(player.getName());
+			player.resetPlayerTime();
+			player.resetMaxHealth();
+			player.resetPlayerWeather();
+			player.setHealth(20);
 		}
 	}
 	

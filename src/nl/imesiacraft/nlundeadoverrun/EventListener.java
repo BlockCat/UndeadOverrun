@@ -5,18 +5,17 @@ import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.Server;
-import org.bukkit.World;
+import org.bukkit.craftbukkit.v1_5_R3.entity.CraftZombie;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Zombie;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.EntityCombustEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 
@@ -147,17 +146,18 @@ public class EventListener implements Listener{
 			}
 		}
 	}
-
+	
 	@EventHandler
-	public void onPlayerMove(PlayerMoveEvent event) {
-		Player player = event.getPlayer();
-		if(plugin.playing.contains(player)) {
-			if(day() == true) {
-				World world = Bukkit.getWorld("Imesia");
-				world.setTime(13000);
-			}	
+	public void onEntityCombust(EntityCombustEvent event){
+		if (event.getEntity() instanceof Zombie) {
+			Zombie zombie = (Zombie) event.getEntity();
+			String name = ((CraftZombie)zombie).getHandle().getCustomName();
+			if (name.equalsIgnoreCase("Zombie") || name.equalsIgnoreCase("Strong Zombie") || name.equalsIgnoreCase("Death Zombie") || name.equalsIgnoreCase("Hell Zombie")) {
+				event.setCancelled(true);
+			}
 		}
 	}
+
 	@EventHandler
 	public void onPlayerQuit(PlayerQuitEvent event) {
 		Player player = event.getPlayer();
@@ -170,18 +170,4 @@ public class EventListener implements Listener{
 			plugin.checkGame();
 		}
 	}
-	
-	public boolean day() {
-		Server server = Bukkit.getServer();
-		long time = server.getWorld("Imesia").getTime();
-
-		if(time > 0 && time < 12300) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-
-
 }

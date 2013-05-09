@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
 
+import net.minecraft.server.v1_5_R3.Item;
 import nl.imesiacraft.nlundeadoverrun.UndeadPlayers.OldPlayer;
 
 import org.bukkit.Bukkit;
@@ -50,12 +51,6 @@ public class UndeadOverrun extends JavaPlugin {
 	public List<Player> playing = new ArrayList<Player>();
 	//Logger
 	private Logger log = null;
-	//player inventory store
-	private HashMap<Player, ItemStack[][]> inv_store = new HashMap<Player, ItemStack[][]>();
-	//player location store
-	private HashMap<Player, Location> loc_store = new HashMap<Player, Location>();
-	//player gamemode store
-	private HashMap<Player, String> gm_store = new HashMap<Player, String>();
 	//Ready players store
 	private List<Player> ready = new ArrayList<Player>();
 	//notReady players store
@@ -212,7 +207,9 @@ public class UndeadOverrun extends JavaPlugin {
 
 									UndeadPlayers.addPlayer(p.getName(), new OldPlayer(p.getLocation(), p.getInventory(), p.getGameMode()));
 									p.setGameMode(GameMode.ADVENTURE);
+									p.setPlayerTime(13000L, false);
 									PlayerInventory inv = p.getInventory();
+									inv.clear();
 									
 									ItemStack boots = new ItemStack(Material.LEATHER_BOOTS, 1);
 									ItemStack leggings = new ItemStack(Material.LEATHER_LEGGINGS, 1);
@@ -222,7 +219,7 @@ public class UndeadOverrun extends JavaPlugin {
 									ItemStack bow = new ItemStack(Material.BOW, 1);
 									ItemStack arrows = new ItemStack(Material.ARROW, 30);
 									ItemStack food = new ItemStack(Material.BREAD,4);
-									inv.clear();
+									
 									inv.setBoots(boots);
 									inv.setLeggings(leggings);
 									inv.setChestplate(chestplate);
@@ -235,9 +232,11 @@ public class UndeadOverrun extends JavaPlugin {
 									score.put(p.getName(), 0);
 									//teleport
 									p.teleport(startLoc);
-									//set good and health to full
+
+									p.setMaxHealth(50);
+									p.setHealth(50);
 									p.setFoodLevel(20);
-									p.setHealth(20);
+									
 									//set the team properties
 									team.setPrefix(ChatColor.GRAY + "[UO]");
 									team.setAllowFriendlyFire(true);
@@ -297,47 +296,6 @@ public class UndeadOverrun extends JavaPlugin {
 			}
 		}
 		return false;
-	}
-	public void saveInv(Player p){
-		ItemStack[] [] store = new ItemStack[2][1];
-		store[0] = p.getInventory().getContents();
-		store[1] = p.getInventory().getArmorContents();
-		this.inv_store.put(p, store);
-	}
-
-
-	public void restoreInv(Player p){
-		p.getInventory().clear();
-		p.getInventory().setContents(this.inv_store.get(p)[0]);
-		p.getInventory().setArmorContents(this.inv_store.get(p)[1]);
-		this.inv_store.remove(p);
-		//Isn't needed anymore.
-		//p.updateInventory();
-	}
-	public void safeLoc(Player p){
-		Location loc = p.getLocation();
-		this.loc_store.put(p, loc);
-	}
-	public void restoreLoc(Player p){
-		Location loc = this.loc_store.get(p);
-		p.teleport(loc);
-	}
-	public void saveGamemode(Player p) {
-		if(p.getGameMode() == GameMode.SURVIVAL) {
-			gm_store.put(p, "s");
-		} else if(p.getGameMode() == GameMode.CREATIVE) {
-			gm_store.put(p, "c");
-		}
-	}
-	public void restoreGamemode(Player p) {
-        if(gm_store.containsKey(p)) {
-    		String gm = gm_store.get(p);
-    		if (gm.equals("s")) {
-    			p.setGameMode(GameMode.SURVIVAL);
-    		} else if(gm.equals("c")) {
-    			p.setGameMode(GameMode.CREATIVE);
-    		}	
-        }
 	}
 
 	private Vector getSpawnLoc(World world) {
@@ -466,7 +424,7 @@ public class UndeadOverrun extends JavaPlugin {
 			p.sendMessage(ChatColor.GRAY + "You earned two diamonds!"); 
 		}	
 	}
-	public void removeMobs() {
+	private void removeMobs() {
 		Location loc = new Location(Bukkit.getWorld("Imesia"), 2812, 89, -4315);
 		List<Entity> entities = loc.getWorld().getEntities();
 		Vector ownVector = loc.toVector();
@@ -481,6 +439,20 @@ public class UndeadOverrun extends JavaPlugin {
 			}
 		}		
 	}
+	
+	private void removeItems() {
+		Location loc = new Location(Bukkit.getWorld("Imesia"), 2812, 89, -4315);
+		List<Entity> entities = loc.getWorld().getEntities();
+		Vector ownVector = loc.toVector();
+		for (Entity entity : entities) {
+			if(entity.getLocation().toVector().distance(ownVector) < 80) {
+				if(entity instanceof Item) {
+					entity.remove();
+				}
+			}
+		}	
+	}
+	
 	public void updateScoreBoard() {
 		int id = Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
 			public void run() {	
@@ -526,6 +498,7 @@ public class UndeadOverrun extends JavaPlugin {
 			wave = 0;
 			score.clear();
 			removeMobs();
+			removeItems();
 		}	
 	}
 }
